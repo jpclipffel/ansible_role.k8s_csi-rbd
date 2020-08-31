@@ -1,0 +1,6 @@
+# code: language=Ansible insertSpaces=true tabSize=2
+
+k8s_csi_rbd_repository: "https://ceph.github.io/csi-charts"
+k8s_csi_rbd_chart: "ceph-csi-rbd"
+k8s_csi_rbd_release: "ceph-csi-rbd"
+k8s_csi_rbd_namespace: "kube-system"

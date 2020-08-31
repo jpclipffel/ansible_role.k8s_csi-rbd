@@ -1,0 +1,44 @@
+# code: language=Ansible insertSpaces=true tabSize=2
+
+- name: Assertions
+  assert:
+    that:
+      - k8s_primary_master_name is defined
+      - k8s_node_type is defined
+  tags: [never, apply, delete]
+
+
+- name: Get Helm releases
+  shell: >
+    helm list --namespace {{ k8s_csi_rbd_namespace }} -o yaml
+  when:
+    - inventory_hostname == k8s_primary_master_name
+  register: _helm_releases
+  tags: [never, apply, delete]
+
+
+- name: Set ceph-csi-rbd status
+  set_fact:
+    k8s_ceph_csi_rbd_status: "{{ (_helm_releases.stdout | from_yaml | selectattr('name', 'equalto', k8s_csi_rbd_release) | list)[0].status | default('') }}"
+  when:
+    - inventory_hostname == k8s_primary_master_name
+  tags: [never, apply, delete]
+
+
+- name: Install ceph-csi-rbd
+  shell: >
+    helm {% if k8s_ceph_csi_rbd_status == "deployed" %} upgrade {% else %} install {% endif %} 
+    {{ k8s_csi_rbd_release }} {{ k8s_csi_rbd_chart }} --repo {{ k8s_csi_rbd_repository }} --namespace {{ k8s_csi_rbd_namespace }}
+  when:
+    - inventory_hostname == k8s_primary_master_name
+  tags: [never, apply]
+
+
+- name: Uninstall ceph-csi-rbd
+  shell: >
+    helm delete {{ k8s_csi_rbd_release }} --namespace {{ k8s_csi_rbd_namespace }}
+  when:
+    - inventory_hostname == k8s_primary_master_name
+    - k8s_ceph_csi_rbd_status == "deployed"
+  ignore_errors: yes
+  tags: [never, delete]

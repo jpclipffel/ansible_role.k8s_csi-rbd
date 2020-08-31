@@ -1,0 +1,3 @@
+galaxy_info:
+  role_name: k8s_csi-rbd
+  description: Manages Ceph's RBD CSI plugin on Kubernetes clusters.
